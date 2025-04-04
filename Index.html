@@ -81,8 +81,14 @@
     }
 
     function getTime() {
-      return new Date().toISOString();
-    }
+  const now = new Date();
+  const estTime = now.toLocaleString("en-US", {
+    timeZone: "America/New_York",
+    hour12: false
+  });
+  return estTime;
+}
+
 
     function login() {
       loginTime = getTime();
