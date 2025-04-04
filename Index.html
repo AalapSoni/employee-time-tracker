@@ -174,12 +174,7 @@
       ids.forEach(id => document.getElementById(id).disabled = state);
     }
 
-    window.addEventListener("beforeunload", function (e) {
-      if (loginTime && !logoutTime) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    });
+    window.addEventListener("beforeunload", function (e) { if (loginTime && !logoutTime) { e.preventDefault(); e.returnValue = ''; }});
   </script>
 </body>
 </html>
