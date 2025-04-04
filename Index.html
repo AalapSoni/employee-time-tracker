@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Employee Time Tracker</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+    label, select, input, button { display: block; margin: 10px 0; width: 100%; padding: 8px; }
+    #timerDisplay, #breakDisplay { font-size: 1.5em; margin: 10px 0; text-align: center; color: green; }
+  </style>
+</head>
+<body>
+  <h2>Employee Time Tracker</h2>
+  <label for="name">Name:</label>
+  <select id="name">
+    <option value="">--Select Name--</option>
+    <option>Tarun</option>
+    <option>Yuvraj</option>
+    <!-- Add more names here -->
+  </select>
+
+  <label for="email">Email:</label>
+  <input type="email" id="email" placeholder="Enter email">
+
+  <button id="loginBtn" onclick="login()">Login</button>
+  <button id="breakInBtn" onclick="breakIn()">Break In</button>
+  <button id="breakOutBtn" onclick="breakOut()">Break Out</button>
+  <button id="logoutBtn" onclick="logout()">Logout & Submit</button>
+  <button onclick="resetAll()">Reset</button>
+
+  <div id="timerDisplay">Timer: 00:00:00</div>
+  <div id="breakDisplay">Breaks: 00:00:00</div>
+
+  <script>
+    let loginTime = null, logoutTime = null;
+    let timerInterval = null, breakTimer = null;
+    let elapsedSeconds = 0, breakSeconds = 0;
+    let breaks = [];
+    let breakInTimes = [], breakOutTimes = [];
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        elapsedSeconds++;
+        updateDisplay();
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+    }
+
+    function startBreakTimer() {
+      breakTimer = setInterval(() => {
+        breakSeconds++;
+        updateDisplay();
+      }, 1000);
+    }
+
+    function stopBreakTimer() {
+      clearInterval(breakTimer);
+    }
+
+    function updateDisplay() {
+      const t = formatTime(elapsedSeconds);
+      const b = formatTime(breakSeconds);
+      document.getElementById('timerDisplay').textContent = `Timer: ${t}`;
+      document.getElementById('breakDisplay').textContent = `Breaks: ${b}`;
+    }
+
+    function formatTime(total) {
+      const hrs = String(Math.floor(total / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+      const secs = String(total % 60).padStart(2, '0');
+      return `${hrs}:${mins}:${secs}`;
+    }
+
+    function getTime() {
+      return new Date().toISOString();
+    }
+
+    function login() {
+      loginTime = getTime();
+      elapsedSeconds = 0;
+      breakSeconds = 0;
+      breaks = [];
+      breakInTimes = [];
+      breakOutTimes = [];
+      startTimer();
+      disableButtons(['loginBtn']);
+      alert("Login recorded at: " + loginTime);
+    }
+
+    function breakIn() {
+      const time = getTime();
+      breaks.push({ start: time, end: null });
+      breakInTimes.push(time);
+      startBreakTimer();
+      disableButtons(['breakInBtn']);
+      alert("Break started.");
+    }
+
+    function breakOut() {
+      if (breaks.length > 0 && !breaks[breaks.length - 1].end) {
+        const time = getTime();
+        breaks[breaks.length - 1].end = time;
+        breakOutTimes.push(time);
+        stopBreakTimer();
+        disableButtons(['breakOutBtn'], false);
+        disableButtons(['breakInBtn'], false);
+        alert("Break ended.");
+      }
+    }
+
+    function logout() {
+      logoutTime = getTime();
+      stopTimer();
+      stopBreakTimer();
+
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+
+      if (!name || !email || !loginTime || !logoutTime) {
+        alert("Please complete login/logout and fill all fields.");
+        return;
+      }
+
+      const formData = {
+        name,
+        email,
+        loginTime,
+        logoutTime,
+        breakDetails: breaks,
+        breakInTimes,
+        breakOutTimes,
+        totalDuration: formatTime(elapsedSeconds),
+        breakDuration: formatTime(breakSeconds),
+        workDuration: formatTime(elapsedSeconds - breakSeconds)
+      };
+
+      fetch("https://script.google.com/macros/s/AKfycbzEdniBWPYGRj8-0Fhdhf5fuGdDw1JF5NzAXDIO61IHFOty9360m0QDcvRSNO059Om6Ag/exec", {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+
+      alert("Data submitted successfully!");
+      disableButtons(['logoutBtn', 'breakInBtn', 'breakOutBtn']);
+    }
+
+    function resetAll() {
+      stopTimer();
+      stopBreakTimer();
+      loginTime = logoutTime = null;
+      elapsedSeconds = breakSeconds = 0;
+      breaks = [];
+      breakInTimes = [];
+      breakOutTimes = [];
+      updateDisplay();
+      disableButtons(['loginBtn', 'breakInBtn', 'breakOutBtn', 'logoutBtn'], false);
+      alert("Form reset.");
+    }
+
+    function disableButtons(ids, state = true) {
+      ids.forEach(id => document.getElementById(id).disabled = state);
+    }
+  </script>
+</body>
+</html>
