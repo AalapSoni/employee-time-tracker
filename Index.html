@@ -82,10 +82,7 @@
 
     function getTime() {
   const now = new Date();
-  const estTime = now.toLocaleString("en-US", {
-    timeZone: "America/New_York",
-    hour12: false
-  });
+  const estTime = now.toLocaleString("en-US", { timeZone: "America/New_York", hour12: false });
   return estTime;
 }
 
