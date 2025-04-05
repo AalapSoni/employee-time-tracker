@@ -29,20 +29,15 @@
   <h2>Employee Login Tracker</h2>
 
   <label for="name">Name</label>
-  <select id="name" autocomplete="off" autocorrect="off" spellcheck="false">
+  <select id="name">
     <option value="Tarun">Tarun</option>
-    <option value="Yuvraj">Yuvraj</option>
-    <option value="Aman">Aman</option>
-    <option value="Art">Art</option>
-    <option value="Anurag">Anurag</option>
-    <option value="Prithvi_Raj">Prithvi_Raj</option>
-    <option value="Charlie">Charlie</option>
-    <option value="Vaishnavi">Vaishnavi</option>
-    <option value="Lakshika">Lakshika</option>
+    <option value="Employee 2">Employee 2</option>
+    <option value="Employee 3">Employee 3</option>
+    <!-- Add more employees as needed -->
   </select>
 
   <label for="email">Email</label>
-  <input type="email" id="email" required autocomplete="off" autocorrect="off" spellcheck="false" />
+  <input type="email" id="email" required />
 
   <div id="timerDisplay">00:00:00</div>
 
@@ -73,6 +68,14 @@
     let breakInTime = null;
     let timerInterval;
 
+    function getESTTime() {
+      const now = new Date();
+      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+      const estOffset = -5; // Eastern Standard Time UTC-5
+      const estDate = new Date(utc + 3600000 * estOffset);
+      return estDate.toLocaleString("en-US", { hour12: false });
+    }
+
     function startTimer(startTime) {
       clearInterval(timerInterval);
       timerInterval = setInterval(() => {
@@ -96,7 +99,7 @@
     }
 
     function subtractDurations(total, breakMs) {
-      const [h, m, s] = total.split(":" ).map(Number);
+      const [h, m, s] = total.split(":").map(Number);
       const totalMs = h * 3600000 + m * 60000 + s * 1000;
       const workMs = totalMs - breakMs;
       const date = new Date(workMs);
@@ -104,7 +107,7 @@
     }
 
     function handleLogin() {
-      const loginTime = new Date().toISOString();
+      const loginTime = getESTTime();
       loginTimeInput.value = loginTime;
       localStorage.setItem("loginTime", loginTime);
       localStorage.setItem("isLoggedIn", "true");
@@ -112,7 +115,7 @@
     }
 
     function handleLogout() {
-      const logoutTime = new Date().toISOString();
+      const logoutTime = getESTTime();
       logoutTimeInput.value = logoutTime;
 
       const loginDate = new Date(loginTimeInput.value);
