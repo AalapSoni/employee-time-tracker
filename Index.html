@@ -4,7 +4,7 @@
   <title>Employee Time Tracker</title>
   <style>
     body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-    label, select, input, button { display: block; margin: 10px 0; width: 100%; padding: 8px; }
+    label, select, input, button { display: block; margin: 10px 0; width: 100%; padding: 8px; box-sizing: border-box; }
     #timerDisplay, #breakDisplay { font-size: 1.5em; margin: 10px 0; text-align: center; color: green; }
   </style>
 </head>
@@ -215,6 +215,8 @@
       breaks = [];
       breakInTimes = [];
       breakOutTimes = [];
+      document.getElementById('name').value = '';
+      document.getElementById('email').value = '';
       updateDisplay();
       disableButtons(['loginBtn', 'breakInBtn', 'breakOutBtn', 'logoutBtn'], false);
       localStorage.removeItem("employeeSession");
