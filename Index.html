@@ -30,7 +30,6 @@
 
   <label for="name">Name</label>
   <select id="name" name="name" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="none">
-    <option value="" disabled selected>Select Name</option>
     <option value="Tarun">Tarun</option>
     <option value="Yuvraj">Yuvraj</option>
     <option value="Aman">Aman</option>
@@ -51,7 +50,6 @@
   <button onclick="startBreak()">Break In</button>
   <button onclick="endBreak()">Break Out</button>
   <button onclick="handleLogout()">Logout & Submit</button>
-  <button onclick="resetForm()">Reset</button>
 
   <input type="hidden" id="loginTime" />
   <input type="hidden" id="logoutTime" />
@@ -152,11 +150,6 @@
       breaks.push({ start: breakInTime, end: breakEndTime });
       localStorage.removeItem("breakInTime");
       localStorage.setItem("breaks", JSON.stringify(breaks));
-    }
-
-    function resetForm() {
-      document.getElementById("name").selectedIndex = 0;
-      document.getElementById("email").value = "";
     }
 
     function sendData() {
