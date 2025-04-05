@@ -29,21 +29,16 @@
   <h2>Employee Login Tracker</h2>
 
   <label for="name">Name</label>
-  <select id="name" name="name" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="none">
-    <option value="" disabled selected>Select Name</option>
+  <select id="name">
+    <option value="" selected disabled>Select Name</option>
     <option value="Tarun">Tarun</option>
-    <option value="Yuvraj">Yuvraj</option>
-    <option value="Aman">Aman</option>
-    <option value="Art">Art</option>
-    <option value="Anurag">Anurag</option>
-    <option value="Prithvi_Raj">Prithvi_Raj</option>
-    <option value="Charlie">Charlie</option>
-    <option value="Vaishnavi">Vaishnavi</option>
-    <option value="Lakshika">Lakshika</option>
+    <option value="Employee 2">Employee 2</option>
+    <option value="Employee 3">Employee 3</option>
+    <!-- Add more employees as needed -->
   </select>
 
   <label for="email">Email</label>
-  <input type="email" id="email" required autocomplete="off" autocorrect="off" spellcheck="false" />
+  <input type="email" id="email" required />
 
   <div id="timerDisplay">00:00:00</div>
 
@@ -75,11 +70,20 @@
     let breakInTime = null;
     let timerInterval;
 
+    function getESTTime() {
+      const now = new Date();
+      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+      const estOffset = -5; // Eastern Standard Time UTC-5
+      const estDate = new Date(utc + 3600000 * estOffset);
+      return estDate.toISOString();
+    }
+
     function startTimer(startTime) {
       clearInterval(timerInterval);
+      const start = new Date(startTime);
       timerInterval = setInterval(() => {
         const now = new Date();
-        const elapsed = new Date(now - startTime);
+        const elapsed = new Date(now - start);
         const hrs = String(elapsed.getUTCHours()).padStart(2, '0');
         const mins = String(elapsed.getUTCMinutes()).padStart(2, '0');
         const secs = String(elapsed.getUTCSeconds()).padStart(2, '0');
@@ -106,15 +110,21 @@
     }
 
     function handleLogin() {
-      const loginTime = new Date().toISOString();
+      const email = document.getElementById("email").value;
+      const name = document.getElementById("name").value;
+      if (!email || !name) {
+        alert("Please enter your email and select your name.");
+        return;
+      }
+      const loginTime = getESTTime();
       loginTimeInput.value = loginTime;
       localStorage.setItem("loginTime", loginTime);
       localStorage.setItem("isLoggedIn", "true");
-      startTimer(new Date(loginTime));
+      startTimer(loginTime);
     }
 
     function handleLogout() {
-      const logoutTime = new Date().toISOString();
+      const logoutTime = getESTTime();
       logoutTimeInput.value = logoutTime;
 
       const loginDate = new Date(loginTimeInput.value);
@@ -131,11 +141,7 @@
       breakDetailsInput.value = JSON.stringify(breaks);
       breakInTimesInput.value = JSON.stringify(breaks.map(b => b.start));
 
-      localStorage.removeItem("isLoggedIn");
-      localStorage.removeItem("loginTime");
-      localStorage.removeItem("breaks");
-      localStorage.removeItem("breakInTime");
-
+      localStorage.clear();
       clearInterval(timerInterval);
       timerDisplay.textContent = "00:00:00";
 
@@ -152,11 +158,6 @@
       breaks.push({ start: breakInTime, end: breakEndTime });
       localStorage.removeItem("breakInTime");
       localStorage.setItem("breaks", JSON.stringify(breaks));
-    }
-
-    function resetForm() {
-      document.getElementById("name").selectedIndex = 0;
-      document.getElementById("email").value = "";
     }
 
     function sendData() {
@@ -182,12 +183,28 @@
       });
     }
 
+    function resetForm() {
+      document.getElementById("name").value = "";
+      document.getElementById("email").value = "";
+      loginTimeInput.value = "";
+      logoutTimeInput.value = "";
+      totalDurationInput.value = "";
+      breakDurationInput.value = "";
+      workDurationInput.value = "";
+      breakDetailsInput.value = "";
+      breakInTimesInput.value = "";
+      timerDisplay.textContent = "00:00:00";
+      clearInterval(timerInterval);
+      breaks = [];
+      localStorage.clear();
+    }
+
     window.onload = function () {
       if (localStorage.getItem("isLoggedIn") === "true") {
         const storedLoginTime = localStorage.getItem("loginTime");
         if (storedLoginTime) {
           loginTimeInput.value = storedLoginTime;
-          startTimer(new Date(storedLoginTime));
+          startTimer(storedLoginTime);
         }
 
         const storedBreaks = localStorage.getItem("breaks");
