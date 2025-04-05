@@ -5,11 +5,15 @@
   <style>
     body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
     label, select, input, button { display: block; margin: 10px 0; width: 100%; padding: 8px; box-sizing: border-box; }
-    #timerDisplay, #breakDisplay { font-size: 1.5em; margin: 10px 0; text-align: center; color: green; }
+    #timerDisplay, #breakDisplay, #summaryDisplay, #timeInfo { font-size: 1.2em; margin: 10px 0; text-align: center; color: green; }
+    #summaryDisplay { white-space: pre-wrap; background: #f0f0f0; padding: 10px; border-radius: 5px; }
+    button#copySummaryBtn { margin-top: 5px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
   </style>
 </head>
 <body>
   <h2>Employee Time Tracker</h2>
+  <div id="timeInfo"></div>
+
   <label for="name">Name:</label>
   <select id="name">
     <option value="">--Select Name--</option>
@@ -22,62 +26,81 @@
     <option>Charlie</option>
     <option>Vaishnavi</option>
     <option>Lakshika</option>
-    <!-- Add more names here -->
   </select>
 
   <label for="email">Email:</label>
   <input type="email" id="email" placeholder="Enter email">
 
-  <button id="loginBtn" onclick="login()">Login</button>
-  <button id="breakInBtn" onclick="breakIn()">Break In</button>
-  <button id="breakOutBtn" onclick="breakOut()">Break Out</button>
-  <button id="logoutBtn" onclick="logout()">Logout & Submit</button>
+  <button id="loginBtn" onclick="login()" disabled>Login</button>
+  <button id="breakInBtn" onclick="breakIn()" disabled>Break In</button>
+  <button id="breakOutBtn" onclick="breakOut()" disabled>Break Out</button>
+  <button id="logoutBtn" onclick="logout()" disabled>Logout & Submit</button>
   <button onclick="resetAll()">Reset</button>
 
   <div id="timerDisplay">Timer: 00:00:00</div>
   <div id="breakDisplay">Breaks: 00:00:00</div>
+  <div id="summaryDisplay"></div>
+  <button id="copySummaryBtn" onclick="copySummary()" style="display:none;">Copy Summary</button>
 
   <script>
     let loginTime = null, logoutTime = null;
     let timerInterval = null, breakTimer = null;
     let elapsedSeconds = 0, breakSeconds = 0;
-    let breaks = [];
-    let breakInTimes = [], breakOutTimes = [];
+    let breaks = [], breakInTimes = [], breakOutTimes = [];
+    let lastTimestamp = null;
 
     function getESTTime() {
-  const now = new Date();
-  const estDate = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
-  return estDate.toLocaleString("en-US", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false
-  });
-}
+      const now = new Date();
+      const estDate = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+      return estDate.toLocaleString("en-US", {
+        timeZone: "America/New_York",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+      });
+    }
 
-
-    function formatTime(total) { const hrs = String(Math.floor(total / 3600)).padStart(2, '0'); const mins = String(Math.floor((total % 3600) / 60)).padStart(2, '0'); const secs = String(total % 60).padStart(2, '0'); return `${hrs}:${mins}:${secs}`; }
+    function formatTime(total) {
+      const hrs = String(Math.floor(total / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
+      const secs = String(total % 60).padStart(2, '0');
+      return `${hrs}:${mins}:${secs}`;
+    }
 
     function updateDisplay() {
       document.getElementById('timerDisplay').textContent = `Timer: ${formatTime(elapsedSeconds)}`;
       document.getElementById('breakDisplay').textContent = `Breaks: ${formatTime(breakSeconds)}`;
     }
 
+    function showTimeInfo() {
+      const today = new Date().toLocaleDateString('en-US', { timeZone: "America/New_York" });
+      let html = `Date: ${today}`;
+      if (loginTime) html += `\nLogin Time: ${loginTime}`;
+      if (logoutTime) html += `\nLogout Time: ${logoutTime}`;
+      document.getElementById('timeInfo').textContent = html;
+    }
+
+    function displaySummary(name, login, logout, total, breakT, workT) {
+      const text = `Name: ${name}\nLogin Time: ${login}\nLogout Time: ${logout}\n\nTotal Hours: ${total}\nBreak Time: ${breakT}\nActual Work Time: ${workT}`;
+      document.getElementById('summaryDisplay').textContent = text;
+      document.getElementById('copySummaryBtn').style.display = 'block';
+    }
+
+    function copySummary() {
+      const summary = document.getElementById('summaryDisplay').textContent;
+      navigator.clipboard.writeText(summary).then(() => alert("Summary copied to clipboard!"));
+    }
+
     function saveSession() {
       const sessionData = {
         name: document.getElementById('name').value,
         email: document.getElementById('email').value,
-        loginTime,
-        logoutTime,
-        elapsedSeconds,
-        breakSeconds,
-        breaks,
-        breakInTimes,
-        breakOutTimes
+        loginTime, logoutTime, elapsedSeconds, breakSeconds, breaks,
+        breakInTimes, breakOutTimes, lastTimestamp: Date.now()
       };
       localStorage.setItem("employeeSession", JSON.stringify(sessionData));
     }
@@ -96,41 +119,80 @@
         breakInTimes = data.breakInTimes;
         breakOutTimes = data.breakOutTimes;
 
-        if (loginTime && !logoutTime) {
-          resumeTimer();
-          if (breaks.length > 0 && !breaks[breaks.length - 1].end) resumeBreakTimer();
-          disableButtons(['loginBtn']);
+        const now = Date.now();
+        if (data.lastTimestamp) {
+          const delta = Math.floor((now - data.lastTimestamp) / 1000);
+          if (loginTime && !logoutTime) elapsedSeconds += delta;
+          if (breaks.length > 0 && !breaks[breaks.length - 1].end) breakSeconds += delta;
         }
+
+        window.onload = function () {
+  const saved = localStorage.getItem("employeeSession");
+  const alreadySubmitted = localStorage.getItem("submittedSession") === "true";
+
+  if (saved) {
+    const sessionData = JSON.parse(saved);
+
+    // Recovery auto-submit logic for crash or accidental closure
+    if (!alreadySubmitted && sessionData && !sessionData.logoutTime) {
+      fetch("https://script.google.com/macros/s/AKfycbzEdniBWPYGRj8-0Fhdhf5fuGdDw1JF5NzAXDIO61IHFOty9360m0QDcvRSNO059Om6Ag/exec", {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sessionData),
+      })
+      .then(() => {
+        console.log("Recovered session auto-submitted.");
+        localStorage.setItem("submittedSession", "true");
+        alert("Previous session was recovered and submitted.");
+      })
+      .catch((err) => console.error("Auto-submit failed:", err));
+    }
+  }
+
+  // Continue your existing window.onload logic from here
+};
+
+
+        if (loginTime && !logoutTime) {
+          startTimer();
+          if (breaks.length > 0 && !breaks[breaks.length - 1].end) startBreakTimer();
+          disableButtons(['loginBtn']);
+          disableButtons(['logoutBtn', 'breakInBtn', 'breakOutBtn'], false);
+        }
+
         updateDisplay();
+        showTimeInfo();
       }
     }
 
     function startTimer() {
-      timerInterval = setInterval(() => {
-        elapsedSeconds++;
-        updateDisplay();
-        saveSession();
-      }, 1000);
-    }
+  timerInterval = setInterval(() => {
+    const now = new Date();
+    const login = new Date(loginTime);
+    elapsedSeconds = Math.floor((now - login) / 1000);
+    updateDisplay();
+    saveSession();
+  }, 1000);
+}
 
-    function resumeTimer() {
-      const now = new Date();
-      const login = new Date(loginTime);
-      elapsedSeconds = Math.floor((now - login) / 1000);
-      startTimer();
-    }
 
     function stopTimer() { clearInterval(timerInterval); }
 
     function startBreakTimer() {
+      let previousTime = Date.now();
       breakTimer = setInterval(() => {
-        breakSeconds++;
+        const now = Date.now();
+        const delta = Math.floor((now - previousTime) / 1000);
+        if (delta > 0) {
+          breakSeconds += delta;
+          previousTime = now;
+        }
         updateDisplay();
         saveSession();
       }, 1000);
     }
 
-    function resumeBreakTimer() { startBreakTimer(); }
     function stopBreakTimer() { clearInterval(breakTimer); }
 
     function login() {
@@ -142,6 +204,8 @@
       breakOutTimes = [];
       startTimer();
       disableButtons(['loginBtn']);
+      disableButtons(['logoutBtn', 'breakInBtn'], false);
+      showTimeInfo();
       saveSession();
       alert("Login recorded at: " + loginTime);
     }
@@ -152,6 +216,7 @@
       breakInTimes.push(time);
       startBreakTimer();
       disableButtons(['breakInBtn']);
+      disableButtons(['breakOutBtn'], false);
       saveSession();
       alert("Break started.");
     }
@@ -162,7 +227,7 @@
         breaks[breaks.length - 1].end = time;
         breakOutTimes.push(time);
         stopBreakTimer();
-        disableButtons(['breakOutBtn'], false);
+        disableButtons(['breakOutBtn']);
         disableButtons(['breakInBtn'], false);
         saveSession();
         alert("Break ended.");
@@ -173,7 +238,6 @@
       logoutTime = getESTTime();
       stopTimer();
       stopBreakTimer();
-
       const name = document.getElementById('name').value;
       const email = document.getElementById('email').value;
 
@@ -183,13 +247,10 @@
       }
 
       const formData = {
-        name,
-        email,
-        loginTime,
-        logoutTime,
+        name, email,
+        loginTime, logoutTime,
         breakDetails: breaks,
-        breakInTimes,
-        breakOutTimes,
+        breakInTimes, breakOutTimes,
         totalDuration: formatTime(elapsedSeconds),
         breakDuration: formatTime(breakSeconds),
         workDuration: formatTime(elapsedSeconds - breakSeconds)
@@ -203,33 +264,53 @@
       });
 
       localStorage.removeItem("employeeSession");
+      showTimeInfo();
+      displaySummary(name, loginTime, logoutTime, formatTime(elapsedSeconds), formatTime(breakSeconds), formatTime(elapsedSeconds - breakSeconds));
       alert("Data submitted successfully!");
       disableButtons(['logoutBtn', 'breakInBtn', 'breakOutBtn']);
     }
 
     function resetAll() {
-      stopTimer();
-      stopBreakTimer();
+      stopTimer(); stopBreakTimer();
       loginTime = logoutTime = null;
       elapsedSeconds = breakSeconds = 0;
-      breaks = [];
-      breakInTimes = [];
-      breakOutTimes = [];
+      breaks = []; breakInTimes = []; breakOutTimes = [];
       document.getElementById('name').value = '';
       document.getElementById('email').value = '';
+      document.getElementById('summaryDisplay').textContent = '';
+      document.getElementById('copySummaryBtn').style.display = 'none';
       updateDisplay();
       disableButtons(['loginBtn', 'breakInBtn', 'breakOutBtn', 'logoutBtn'], false);
+      document.getElementById('timeInfo').textContent = '';
       localStorage.removeItem("employeeSession");
       alert("Form reset.");
+      document.getElementById('loginBtn').disabled = true;
     }
 
     function disableButtons(ids, state = true) {
       ids.forEach(id => document.getElementById(id).disabled = state);
     }
 
-    window.addEventListener("beforeunload", function (e) { if (loginTime && !logoutTime) { e.preventDefault(); e.returnValue = ''; }});
+    document.getElementById('name').addEventListener('change', validateLoginReady);
+    document.getElementById('email').addEventListener('input', validateLoginReady);
 
-    window.onload = loadSession;
+    function validateLoginReady() {
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      document.getElementById('loginBtn').disabled = !(name && email);
+    }
+
+    window.addEventListener("beforeunload", function (e) {
+      if (loginTime && !logoutTime) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+
+    window.onload = () => {
+      loadSession();
+      validateLoginReady();
+    }
   </script>
 </body>
 </html>
