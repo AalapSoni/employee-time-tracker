@@ -17,7 +17,6 @@
       margin-bottom: 15px;
       padding: 8px;
       font-size: 16px;
-      box-sizing: border-box;
     }
     #timerDisplay {
       font-size: 24px;
@@ -30,7 +29,7 @@
   <h2>Employee Login Tracker</h2>
 
   <label for="name">Name</label>
-  <select id="name" name="name" required autocomplete="off" autocorrect="off" spellcheck="false" inputmode="none">
+  <select id="name" name="name" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="none">
     <option value="" disabled selected>Select Name</option>
     <option value="Tarun">Tarun</option>
     <option value="Yuvraj">Yuvraj</option>
@@ -44,7 +43,7 @@
   </select>
 
   <label for="email">Email</label>
-  <input type="email" id="email" name="email" required autocomplete="off" autocorrect="off" spellcheck="false" />
+  <input type="email" id="email" required autocomplete="off" autocorrect="off" spellcheck="false" />
 
   <div id="timerDisplay">00:00:00</div>
 
@@ -75,12 +74,6 @@
     let breaks = [];
     let breakInTime = null;
     let timerInterval;
-
-    function convertToEST(date) {
-      const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
-      const offset = -5 * 60 * 60000; // EST offset
-      return new Date(utc + offset);
-    }
 
     function startTimer(startTime) {
       clearInterval(timerInterval);
@@ -113,7 +106,7 @@
     }
 
     function handleLogin() {
-      const loginTime = convertToEST(new Date()).toISOString();
+      const loginTime = new Date().toISOString();
       loginTimeInput.value = loginTime;
       localStorage.setItem("loginTime", loginTime);
       localStorage.setItem("isLoggedIn", "true");
@@ -121,7 +114,7 @@
     }
 
     function handleLogout() {
-      const logoutTime = convertToEST(new Date()).toISOString();
+      const logoutTime = new Date().toISOString();
       logoutTimeInput.value = logoutTime;
 
       const loginDate = new Date(loginTimeInput.value);
