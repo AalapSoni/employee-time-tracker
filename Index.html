@@ -15,6 +15,13 @@
     <option value="">--Select Name--</option>
     <option>Tarun</option>
     <option>Yuvraj</option>
+    <option>Aman</option>
+    <option>Art</option>
+    <option>Anurag</option>
+    <option>PrithviRaj</option>
+    <option>Charlie</option>
+    <option>Vaishnavi</option>
+    <option>Lakshika</option>
     <!-- Add more names here -->
   </select>
 
@@ -37,17 +44,18 @@
     let breaks = [];
     let breakInTimes = [], breakOutTimes = [];
 
-    function getESTTime() {
-      const date = new Date();
-      return new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' })).toISOString();
-    }
-
     function formatTime(total) {
       const hrs = String(Math.floor(total / 3600)).padStart(2, '0');
       const mins = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
       const secs = String(total % 60).padStart(2, '0');
       return `${hrs}:${mins}:${secs}`;
     }
+
+    function getTime() {
+  const now = new Date();
+  const estTime = now.toLocaleString("en-US", { timeZone: "America/New_York", hour12: false });
+  return estTime;
+}
 
     function updateDisplay() {
       document.getElementById('timerDisplay').textContent = `Timer: ${formatTime(elapsedSeconds)}`;
