@@ -29,15 +29,21 @@
   <h2>Employee Login Tracker</h2>
 
   <label for="name">Name</label>
-  <select id="name">
+  <select id="name" name="name" autocomplete="off" autocorrect="off" spellcheck="false" inputmode="none">
+    <option value="" disabled selected>Select Name</option>
     <option value="Tarun">Tarun</option>
-    <option value="Employee 2">Employee 2</option>
-    <option value="Employee 3">Employee 3</option>
-    <!-- Add more employees as needed -->
+    <option value="Yuvraj">Yuvraj</option>
+    <option value="Aman">Aman</option>
+    <option value="Art">Art</option>
+    <option value="Anurag">Anurag</option>
+    <option value="Prithvi_Raj">Prithvi_Raj</option>
+    <option value="Charlie">Charlie</option>
+    <option value="Vaishnavi">Vaishnavi</option>
+    <option value="Lakshika">Lakshika</option>
   </select>
 
   <label for="email">Email</label>
-  <input type="email" id="email" required />
+  <input type="email" id="email" required autocomplete="off" autocorrect="off" spellcheck="false" />
 
   <div id="timerDisplay">00:00:00</div>
 
@@ -45,6 +51,7 @@
   <button onclick="startBreak()">Break In</button>
   <button onclick="endBreak()">Break Out</button>
   <button onclick="handleLogout()">Logout & Submit</button>
+  <button onclick="resetForm()">Reset</button>
 
   <input type="hidden" id="loginTime" />
   <input type="hidden" id="logoutTime" />
@@ -67,14 +74,6 @@
     let breaks = [];
     let breakInTime = null;
     let timerInterval;
-
-    function getESTTime() {
-      const now = new Date();
-      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-      const estOffset = -5; // Eastern Standard Time UTC-5
-      const estDate = new Date(utc + 3600000 * estOffset);
-      return estDate.toLocaleString("en-US", { hour12: false });
-    }
 
     function startTimer(startTime) {
       clearInterval(timerInterval);
@@ -99,7 +98,7 @@
     }
 
     function subtractDurations(total, breakMs) {
-      const [h, m, s] = total.split(":").map(Number);
+      const [h, m, s] = total.split(":" ).map(Number);
       const totalMs = h * 3600000 + m * 60000 + s * 1000;
       const workMs = totalMs - breakMs;
       const date = new Date(workMs);
@@ -107,7 +106,7 @@
     }
 
     function handleLogin() {
-      const loginTime = getESTTime();
+      const loginTime = new Date().toISOString();
       loginTimeInput.value = loginTime;
       localStorage.setItem("loginTime", loginTime);
       localStorage.setItem("isLoggedIn", "true");
@@ -115,7 +114,7 @@
     }
 
     function handleLogout() {
-      const logoutTime = getESTTime();
+      const logoutTime = new Date().toISOString();
       logoutTimeInput.value = logoutTime;
 
       const loginDate = new Date(loginTimeInput.value);
@@ -153,6 +152,11 @@
       breaks.push({ start: breakInTime, end: breakEndTime });
       localStorage.removeItem("breakInTime");
       localStorage.setItem("breaks", JSON.stringify(breaks));
+    }
+
+    function resetForm() {
+      document.getElementById("name").selectedIndex = 0;
+      document.getElementById("email").value = "";
     }
 
     function sendData() {
