@@ -15,6 +15,13 @@
     <option value="">--Select Name--</option>
     <option>Tarun</option>
     <option>Yuvraj</option>
+    <option>Aman</option>
+    <option>Art</option>
+    <option>Anurag</option>
+    <option>PrithviRaj</option>
+    <option>Charlie</option>
+    <option>Vaishnavi</option>
+    <option>Lakshika</option>
     <!-- Add more names here -->
   </select>
 
@@ -37,19 +44,12 @@
     let breaks = [];
     let breakInTimes = [], breakOutTimes = [];
 
-    function getESTTime() {
-      const date = new Date();
-      const options = { timeZone: 'America/New_York', hour12: false }; // 24-hour format
+    function getESTTime() { const date = new Date(); const options = { timeZone: 'America/New_York', hour12: false }; // 24-hour format
       const dateString = date.toLocaleString('en-US', options);
       return new Date(dateString).toISOString();
     }
 
-    function formatTime(total) {
-      const hrs = String(Math.floor(total / 3600)).padStart(2, '0');
-      const mins = String(Math.floor((total % 3600) / 60)).padStart(2, '0');
-      const secs = String(total % 60).padStart(2, '0');
-      return `${hrs}:${mins}:${secs}`;
-    }
+    function formatTime(total) { const hrs = String(Math.floor(total / 3600)).padStart(2, '0'); const mins = String(Math.floor((total % 3600) / 60)).padStart(2, '0'); const secs = String(total % 60).padStart(2, '0'); return `${hrs}:${mins}:${secs}`; }
 
     function updateDisplay() {
       document.getElementById('timerDisplay').textContent = `Timer: ${formatTime(elapsedSeconds)}`;
