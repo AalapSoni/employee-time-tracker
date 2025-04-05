@@ -15,13 +15,6 @@
     <option value="">--Select Name--</option>
     <option>Tarun</option>
     <option>Yuvraj</option>
-    <option>Aman</option>
-    <option>Art</option>
-    <option>Anurag</option>
-    <option>PrithviRaj</option>
-    <option>Charlie</option>
-    <option>Vaishnavi</option>
-    <option>Lakshika</option>
     <!-- Add more names here -->
   </select>
 
@@ -44,33 +37,9 @@
     let breaks = [];
     let breakInTimes = [], breakOutTimes = [];
 
-    function startTimer() {
-      timerInterval = setInterval(() => {
-        elapsedSeconds++;
-        updateDisplay();
-      }, 1000);
-    }
-
-    function stopTimer() {
-      clearInterval(timerInterval);
-    }
-
-    function startBreakTimer() {
-      breakTimer = setInterval(() => {
-        breakSeconds++;
-        updateDisplay();
-      }, 1000);
-    }
-
-    function stopBreakTimer() {
-      clearInterval(breakTimer);
-    }
-
-    function updateDisplay() {
-      const t = formatTime(elapsedSeconds);
-      const b = formatTime(breakSeconds);
-      document.getElementById('timerDisplay').textContent = `Timer: ${t}`;
-      document.getElementById('breakDisplay').textContent = `Breaks: ${b}`;
+    function getESTTime() {
+      const date = new Date();
+      return new Date(date.toLocaleString('en-US', { timeZone: 'America/New_York' })).toISOString();
     }
 
     function formatTime(total) {
@@ -80,15 +49,79 @@
       return `${hrs}:${mins}:${secs}`;
     }
 
-    function getTime() {
-  const now = new Date();
-  const estTime = now.toLocaleString("en-US", { timeZone: "America/New_York", hour12: false });
-  return estTime;
-}
+    function updateDisplay() {
+      document.getElementById('timerDisplay').textContent = `Timer: ${formatTime(elapsedSeconds)}`;
+      document.getElementById('breakDisplay').textContent = `Breaks: ${formatTime(breakSeconds)}`;
+    }
 
+    function saveSession() {
+      const sessionData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        loginTime,
+        logoutTime,
+        elapsedSeconds,
+        breakSeconds,
+        breaks,
+        breakInTimes,
+        breakOutTimes
+      };
+      localStorage.setItem("employeeSession", JSON.stringify(sessionData));
+    }
+
+    function loadSession() {
+      const saved = localStorage.getItem("employeeSession");
+      if (saved) {
+        const data = JSON.parse(saved);
+        document.getElementById('name').value = data.name;
+        document.getElementById('email').value = data.email;
+        loginTime = data.loginTime;
+        logoutTime = data.logoutTime;
+        elapsedSeconds = data.elapsedSeconds;
+        breakSeconds = data.breakSeconds;
+        breaks = data.breaks;
+        breakInTimes = data.breakInTimes;
+        breakOutTimes = data.breakOutTimes;
+
+        if (loginTime && !logoutTime) {
+          resumeTimer();
+          if (breaks.length > 0 && !breaks[breaks.length - 1].end) resumeBreakTimer();
+          disableButtons(['loginBtn']);
+        }
+        updateDisplay();
+      }
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        elapsedSeconds++;
+        updateDisplay();
+        saveSession();
+      }, 1000);
+    }
+
+    function resumeTimer() {
+      const now = new Date();
+      const login = new Date(loginTime);
+      elapsedSeconds = Math.floor((now - login) / 1000);
+      startTimer();
+    }
+
+    function stopTimer() { clearInterval(timerInterval); }
+
+    function startBreakTimer() {
+      breakTimer = setInterval(() => {
+        breakSeconds++;
+        updateDisplay();
+        saveSession();
+      }, 1000);
+    }
+
+    function resumeBreakTimer() { startBreakTimer(); }
+    function stopBreakTimer() { clearInterval(breakTimer); }
 
     function login() {
-      loginTime = getTime();
+      loginTime = getESTTime();
       elapsedSeconds = 0;
       breakSeconds = 0;
       breaks = [];
@@ -96,32 +129,35 @@
       breakOutTimes = [];
       startTimer();
       disableButtons(['loginBtn']);
+      saveSession();
       alert("Login recorded at: " + loginTime);
     }
 
     function breakIn() {
-      const time = getTime();
+      const time = getESTTime();
       breaks.push({ start: time, end: null });
       breakInTimes.push(time);
       startBreakTimer();
       disableButtons(['breakInBtn']);
+      saveSession();
       alert("Break started.");
     }
 
     function breakOut() {
       if (breaks.length > 0 && !breaks[breaks.length - 1].end) {
-        const time = getTime();
+        const time = getESTTime();
         breaks[breaks.length - 1].end = time;
         breakOutTimes.push(time);
         stopBreakTimer();
         disableButtons(['breakOutBtn'], false);
         disableButtons(['breakInBtn'], false);
+        saveSession();
         alert("Break ended.");
       }
     }
 
     function logout() {
-      logoutTime = getTime();
+      logoutTime = getESTTime();
       stopTimer();
       stopBreakTimer();
 
@@ -153,6 +189,7 @@
         body: JSON.stringify(formData)
       });
 
+      localStorage.removeItem("employeeSession");
       alert("Data submitted successfully!");
       disableButtons(['logoutBtn', 'breakInBtn', 'breakOutBtn']);
     }
@@ -167,6 +204,7 @@
       breakOutTimes = [];
       updateDisplay();
       disableButtons(['loginBtn', 'breakInBtn', 'breakOutBtn', 'logoutBtn'], false);
+      localStorage.removeItem("employeeSession");
       alert("Form reset.");
     }
 
@@ -175,6 +213,8 @@
     }
 
     window.addEventListener("beforeunload", function (e) { if (loginTime && !logoutTime) { e.preventDefault(); e.returnValue = ''; }});
+
+    window.onload = loadSession;
   </script>
 </body>
 </html>
